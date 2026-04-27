@@ -106,4 +106,6 @@ public class Reservation {
     public void setCheck_out(boolean check_out) {
         this.check_out = check_out;
     }
+
+
 }
