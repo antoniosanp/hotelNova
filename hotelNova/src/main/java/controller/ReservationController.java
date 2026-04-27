@@ -26,6 +26,14 @@ public class ReservationController {
         return reservationService.checkIn(roomId, guestId, dayIn, dayOut);
     }
 
+    public Reservation updateReservation(Reservation reservation) {
+        return reservationService.updateReservation(reservation);
+    }
+
+    public boolean deleteReservation(int reservationId) {
+        return reservationService.deleteReservation(reservationId);
+    }
+
     public double checkOut(int reservationId) {
         return reservationService.checkOut(reservationId);
     }

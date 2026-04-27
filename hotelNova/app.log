@@ -10,3 +10,11 @@
 [INFO] POST /auth/register
 [INFO] GET /users
 [INFO] POST /auth/login
+[INFO] POST /auth/login
+[INFO] GET /guests
+[INFO] POST /guests
+[INFO] GET /guests
+[INFO] POST /guests
+[INFO] GET /rooms
+[INFO] POST /rooms
+[INFO] POST /rooms

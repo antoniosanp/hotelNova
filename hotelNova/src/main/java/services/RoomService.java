@@ -67,6 +67,15 @@ public class RoomService implements IRoomService {
     }
 
     @Override
+    public boolean deleteRoom(int roomId) {
+        AppLogger.http("DELETE", "/rooms/" + roomId);
+        if (roomDAO.findById(roomId).isEmpty()) {
+            throw new NotFoundException("No existe la habitación");
+        }
+        return roomDAO.deleteById(roomId);
+    }
+
+    @Override
     public boolean toggleActive(int roomId, boolean active) {
         AppLogger.http("PATCH", "/rooms/" + roomId + "/active");
         if (roomDAO.findById(roomId).isEmpty()) {

@@ -122,6 +122,43 @@ public class ReservationService implements IReservationService {
     }
 
     @Override
+    public Reservation updateReservation(Reservation reservation) {
+        AppLogger.http("PATCH", "/reservations/" + reservation.getId());
+        validateDates(reservation.getDay_in(), reservation.getDay_out());
+
+        Reservation existing = reservationDAO.findById(reservation.getId())
+                .orElseThrow(() -> new NotFoundException("Reserva no encontrada"));
+        roomDAO.findById(reservation.getId_room()).orElseThrow(() -> new NotFoundException("Habitación no encontrada"));
+        guestDAO.findById(reservation.getId_guest()).orElseThrow(() -> new NotFoundException("Huésped no encontrado"));
+
+        boolean overlap = reservationDAO.findByRoom(reservation.getId_room()).stream()
+                .filter(r -> r.getId() != reservation.getId())
+                .anyMatch(r -> datesOverlap(r.getDay_in(), r.getDay_out(), reservation.getDay_in(), reservation.getDay_out()));
+        if (overlap) {
+            throw new BusinessException("No se permite solapamiento de reservas para la misma habitación");
+        }
+
+        if (reservation.getTotal_nights() <= 0) {
+            reservation.setTotal_nights(Math.toIntExact(ChronoUnit.DAYS.between(reservation.getDay_in(), reservation.getDay_out())));
+        }
+        if (existing.isCheck_out()) {
+            throw new BusinessException("No se puede editar una reserva finalizada");
+        }
+        return reservationDAO.update(reservation) ? reservation : existing;
+    }
+
+    @Override
+    public boolean deleteReservation(int reservationId) {
+        AppLogger.http("DELETE", "/reservations/" + reservationId);
+        Reservation existing = reservationDAO.findById(reservationId)
+                .orElseThrow(() -> new NotFoundException("Reserva no encontrada"));
+        if (existing.isCheck_in() && !existing.isCheck_out()) {
+            throw new BusinessException("No se puede eliminar una reserva activa");
+        }
+        return reservationDAO.deleteById(reservationId);
+    }
+
+    @Override
     public double checkOut(int reservationId) {
         AppLogger.http("PATCH", "/reservations/check-out/" + reservationId);
         Reservation active = reservationDAO.findActiveById(reservationId)
@@ -190,5 +227,9 @@ public class ReservationService implements IReservationService {
         if (!dayIn.isBefore(dayOut)) {
             throw new BusinessException("Fecha inválida: check-in debe ser menor que check-out");
         }
+    }
+
+    private boolean datesOverlap(LocalDate startA, LocalDate endA, LocalDate startB, LocalDate endB) {
+        return startA.isBefore(endB) && startB.isBefore(endA);
     }
 }

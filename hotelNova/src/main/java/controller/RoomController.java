@@ -29,6 +29,10 @@ public class RoomController {
         return roomService.updateRoom(room);
     }
 
+    public boolean deleteRoom(int roomId) {
+        return roomService.deleteRoom(roomId);
+    }
+
     public boolean toggleRoomActive(int roomId, boolean active) {
         return roomService.toggleActive(roomId, active);
     }
