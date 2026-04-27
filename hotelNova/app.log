@@ -3,3 +3,10 @@
 [INFO] POST /auth/login
 [INFO] GET /exports/rooms
 [INFO] GET /exports/reservations-active
+[INFO] POST /auth/register
+[INFO] GET /reservations
+[INFO] POST /auth/register
+[INFO] POST /auth/register
+[INFO] POST /auth/register
+[INFO] GET /users
+[INFO] POST /auth/login
