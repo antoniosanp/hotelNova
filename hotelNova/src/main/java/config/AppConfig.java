@@ -41,7 +41,7 @@ public class AppConfig {
 
     // App getters
     public String getAppName()    { return appProps.getProperty("app.name"); }
-    public String getViewType()   { return appProps.getProperty("view.type", "console"); }
+    //public String getViewType()   { return appProps.getProperty("view.type", "console"); }
     public double getIva() {
         try {
             return Double.parseDouble(appProps.getProperty("iva", "0.19"));
