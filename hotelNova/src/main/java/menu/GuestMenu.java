@@ -35,7 +35,7 @@ public class GuestMenu {
                     default -> JOptionPane.showMessageDialog(null, "Opción inválida");
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, rootMessage(ex), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -67,5 +67,13 @@ public class GuestMenu {
             throw new IllegalArgumentException("Dato numérico obligatorio");
         }
         return Integer.parseInt(value.trim());
+    }
+
+    private String rootMessage(Throwable ex) {
+        Throwable current = ex;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current.getMessage() == null ? ex.getMessage() : current.getMessage();
     }
 }

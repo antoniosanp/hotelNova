@@ -29,8 +29,10 @@ public class ReservationService implements IReservationService {
     private static final String STATE_DISPONIBLE = "DISPONIBLE";
     private static final String STATE_OCUPADA = "OCUPADA";
     private static final String INSERT_RESERVATION_SQL =
-            "INSERT INTO reservation (id_room, id_guest, total_nights, day_in, day_out, check_in, check_out) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id_reservation";
+            "INSERT INTO reservation (id_reservation, id_room, id_guest, total_nights, day_in, day_out, check_in, check_out) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String NEXT_RESERVATION_ID_SQL =
+            "SELECT COALESCE(MAX(id_reservation), 0) + 1 FROM reservation";
     private static final String UPDATE_ROOM_STATE_SQL =
             "UPDATE room SET room_state=? WHERE id_room=?";
     private static final String CHECK_OUT_SQL =
@@ -84,20 +86,28 @@ public class ReservationService implements IReservationService {
         try (Connection conn = connectionManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                try (PreparedStatement insertReservation = conn.prepareStatement(INSERT_RESERVATION_SQL)) {
-                    insertReservation.setInt(1, reservation.getId_room());
-                    insertReservation.setInt(2, reservation.getId_guest());
-                    insertReservation.setInt(3, reservation.getTotal_nights());
-                    insertReservation.setDate(4, Date.valueOf(reservation.getDay_in()));
-                    insertReservation.setDate(5, Date.valueOf(reservation.getDay_out()));
-                    insertReservation.setBoolean(6, true);
-                    insertReservation.setBoolean(7, false);
+                int reservationId;
+                try (PreparedStatement nextIdPs = conn.prepareStatement(NEXT_RESERVATION_ID_SQL);
+                     ResultSet rs = nextIdPs.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new SQLException("No fue posible calcular id de reserva");
+                    }
+                    reservationId = rs.getInt(1);
+                }
+                reservation.setId(reservationId);
 
-                    try (ResultSet rs = insertReservation.executeQuery()) {
-                        if (!rs.next()) {
-                            throw new SQLException("No fue posible crear la reserva");
-                        }
-                        reservation.setId(rs.getInt("id_reservation"));
+                try (PreparedStatement insertReservation = conn.prepareStatement(INSERT_RESERVATION_SQL)) {
+                    insertReservation.setInt(1, reservation.getId());
+                    insertReservation.setInt(2, reservation.getId_room());
+                    insertReservation.setInt(3, reservation.getId_guest());
+                    insertReservation.setInt(4, reservation.getTotal_nights());
+                    insertReservation.setDate(5, Date.valueOf(reservation.getDay_in()));
+                    insertReservation.setDate(6, Date.valueOf(reservation.getDay_out()));
+                    insertReservation.setBoolean(7, true);
+                    insertReservation.setBoolean(8, false);
+
+                    if (insertReservation.executeUpdate() == 0) {
+                        throw new SQLException("No fue posible crear la reserva");
                     }
                 }
 

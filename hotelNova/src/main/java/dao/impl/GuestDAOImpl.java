@@ -14,8 +14,8 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
     // SQL CRUD GENERAL
     // =========================
     private static final String INSERT =
-            "INSERT INTO guest (name, email) " +
-                    "VALUES (?, ?)";
+            "INSERT INTO guest (id_guest, name, email) " +
+                    "VALUES (?, ?, ?)";
 
     private static final String UPDATE =
             "UPDATE guest SET name=?, email=? " +
@@ -35,6 +35,8 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
     // =========================
     private static final String FIND_BY_EMAIL =
             "SELECT * FROM guest WHERE email=?";
+    private static final String NEXT_ID =
+            "SELECT COALESCE(MAX(id_guest), 0) + 1 FROM guest";
 
 
     // ==================================================
@@ -79,8 +81,12 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
 
     @Override
     protected void setInsertParams(PreparedStatement ps, Guest guest) throws SQLException {
-        ps.setString(1, guest.getName());
-        ps.setString(2, guest.getEmail());
+        if (guest.getId() <= 0) {
+            guest.setId(nextId());
+        }
+        ps.setInt(1, guest.getId());
+        ps.setString(2, guest.getName());
+        ps.setString(3, guest.getEmail());
 
     }
 
@@ -103,7 +109,9 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
 
     @Override
     protected void setGeneratedKey(Guest guest, ResultSet keys) throws SQLException {
-        guest.setId(keys.getInt(1));
+        if (guest.getId() <= 0) {
+            guest.setId(keys.getInt(1));
+        }
     }
 
     // ===================================
@@ -125,6 +133,19 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
         }
 
 
+    }
+
+    private int nextId() {
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(NEXT_ID);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            throw new RuntimeException("No fue posible calcular el id de guest");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obteniendo next id de guest", e);
+        }
     }
 
 

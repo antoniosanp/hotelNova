@@ -18,8 +18,8 @@ public class UserDAOImpl extends  GenericDAOImpl<User, Integer> implements UserD
     // SQL CRUD GENERAL
     // =========================
     private static final String INSERT =
-            "INSERT INTO users (email, password, rol, name) " +
-                    "VALUES (?, ?, ?, ?)";
+            "INSERT INTO users (id_user, email, password, rol, name) " +
+                    "VALUES (?, ?, ?, ?, ?)";
 
     private static final String UPDATE =
             "UPDATE users SET email=?, password=?, rol=?, name=? " +
@@ -43,6 +43,8 @@ public class UserDAOImpl extends  GenericDAOImpl<User, Integer> implements UserD
 
     private static final String FIND_BY_ROL =
             "SELECT * FROM users WHERE rol=?";
+    private static final String NEXT_ID =
+            "SELECT COALESCE(MAX(id_user), 0) + 1 FROM users";
 
 
     // ==================================================
@@ -89,10 +91,14 @@ public class UserDAOImpl extends  GenericDAOImpl<User, Integer> implements UserD
 
     @Override
     protected void setInsertParams(PreparedStatement ps, User user) throws SQLException {
-        ps.setString(1, user.getEmail());
-        ps.setString(2,user.getPassword());
-        ps.setString(3,user.getRol());
-        ps.setString(4,user.getName());
+        if (user.getId() <= 0) {
+            user.setId(nextId());
+        }
+        ps.setInt(1, user.getId());
+        ps.setString(2, user.getEmail());
+        ps.setString(3,user.getPassword());
+        ps.setString(4,user.getRol());
+        ps.setString(5,user.getName());
 
     }
 
@@ -118,7 +124,9 @@ public class UserDAOImpl extends  GenericDAOImpl<User, Integer> implements UserD
 
     @Override
     protected void setGeneratedKey(User user, ResultSet keys) throws SQLException {
-        user.setId(keys.getInt(1));
+        if (user.getId() <= 0) {
+            user.setId(keys.getInt(1));
+        }
     }
 
     // ===================================
@@ -159,6 +167,19 @@ public class UserDAOImpl extends  GenericDAOImpl<User, Integer> implements UserD
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en findByEmail", e);
+        }
+    }
+
+    private int nextId() {
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(NEXT_ID);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            throw new RuntimeException("No fue posible calcular el id de user");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obteniendo next id de user", e);
         }
     }
 

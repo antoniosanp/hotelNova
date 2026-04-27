@@ -16,8 +16,8 @@ import java.util.Optional;
 public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> implements ReservationDAO {
 
     private static final String INSERT =
-            "INSERT INTO reservation (id_room, id_guest, total_nights, day_in, day_out, check_in, check_out) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO reservation (id_reservation, id_room, id_guest, total_nights, day_in, day_out, check_in, check_out) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE =
             "UPDATE reservation SET id_room=?, id_guest=?, total_nights=?, day_in=?, day_out=?, check_in=?, check_out=? " +
@@ -44,6 +44,8 @@ public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> imp
     private static final String OVERLAP =
             "SELECT COUNT(*) FROM reservation " +
                     "WHERE id_room=? AND daterange(day_in, day_out, '[)') && daterange(?, ?, '[)')";
+    private static final String NEXT_ID =
+            "SELECT COALESCE(MAX(id_reservation), 0) + 1 FROM reservation";
 
     @Override
     protected Reservation mapRow(ResultSet rs) throws SQLException {
@@ -86,6 +88,21 @@ public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> imp
 
     @Override
     protected void setInsertParams(PreparedStatement ps, Reservation reservation) throws SQLException {
+        if (reservation.getId() <= 0) {
+            reservation.setId(nextId());
+        }
+        ps.setInt(1, reservation.getId());
+        ps.setInt(2, reservation.getId_room());
+        ps.setInt(3, reservation.getId_guest());
+        ps.setInt(4, reservation.getTotal_nights());
+        ps.setDate(5, Date.valueOf(reservation.getDay_in()));
+        ps.setDate(6, Date.valueOf(reservation.getDay_out()));
+        ps.setBoolean(7, reservation.isCheck_in());
+        ps.setBoolean(8, reservation.isCheck_out());
+    }
+
+    @Override
+    protected void setUpdateParams(PreparedStatement ps, Reservation reservation) throws SQLException {
         ps.setInt(1, reservation.getId_room());
         ps.setInt(2, reservation.getId_guest());
         ps.setInt(3, reservation.getTotal_nights());
@@ -93,11 +110,6 @@ public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> imp
         ps.setDate(5, Date.valueOf(reservation.getDay_out()));
         ps.setBoolean(6, reservation.isCheck_in());
         ps.setBoolean(7, reservation.isCheck_out());
-    }
-
-    @Override
-    protected void setUpdateParams(PreparedStatement ps, Reservation reservation) throws SQLException {
-        setInsertParams(ps, reservation);
         ps.setInt(8, reservation.getId());
     }
 
@@ -113,7 +125,9 @@ public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> imp
 
     @Override
     protected void setGeneratedKey(Reservation reservation, ResultSet keys) throws SQLException {
-        reservation.setId(keys.getInt(1));
+        if (reservation.getId() <= 0) {
+            reservation.setId(keys.getInt(1));
+        }
     }
 
     @Override
@@ -174,6 +188,19 @@ public class ReservationDAOImpl extends GenericDAOImpl<Reservation, Integer> imp
             return false;
         } catch (SQLException e) {
             throw new RuntimeException("Error en hasOverlappingReservation", e);
+        }
+    }
+
+    private int nextId() {
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(NEXT_ID);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            throw new RuntimeException("No fue posible calcular el id de reservation");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obteniendo next id de reservation", e);
         }
     }
 }

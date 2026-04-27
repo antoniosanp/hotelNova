@@ -37,7 +37,7 @@ public class ReservationMenu {
                     default -> JOptionPane.showMessageDialog(null, "Opción inválida");
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, rootMessage(ex), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -95,5 +95,13 @@ public class ReservationMenu {
             throw new IllegalArgumentException("Fecha obligatoria");
         }
         return LocalDate.parse(value.trim());
+    }
+
+    private String rootMessage(Throwable ex) {
+        Throwable current = ex;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current.getMessage() == null ? ex.getMessage() : current.getMessage();
     }
 }

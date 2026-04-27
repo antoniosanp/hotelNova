@@ -3,7 +3,6 @@ package dao.impl;
 import dao.RoomDAO;
 import model.Room;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Optional;
 
@@ -13,8 +12,8 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
     // SQL CRUD GENERAL
     // =========================
     private static final String INSERT =
-            "INSERT INTO room (room_number, room_capacity, room_price, room_state, isActive) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+            "INSERT INTO room (id_room, room_number, room_capacity, room_price, room_state, isActive) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE =
             "UPDATE room SET room_number=?, room_capacity=?, room_price=?, room_state=?, isActive=? " +
@@ -40,6 +39,8 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
     private static final String UPDATE_ACTIVE =
             "UPDATE room SET isActive=? WHERE id_room=?";
+    private static final String NEXT_ID =
+            "SELECT COALESCE(MAX(id_room), 0) + 1 FROM room";
 
     // ==================================================
     // IMPLEMENTACIÓN MÉTODOS ABSTRACTOS GenericDAOImpl
@@ -87,11 +88,15 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
     @Override
     protected void setInsertParams(PreparedStatement ps, Room room) throws SQLException {
-        ps.setInt(1, room.getRoom_number());
-        ps.setInt(2, room.getRoom_capacity());
-        ps.setDouble(3, room.getRoom_price());
-        ps.setString(4, room.getRoom_state());
-        ps.setBoolean(5, room.isActive());
+        if (room.getId() <= 0) {
+            room.setId(nextId());
+        }
+        ps.setInt(1, room.getId());
+        ps.setInt(2, room.getRoom_number());
+        ps.setInt(3, room.getRoom_capacity());
+        ps.setDouble(4, room.getRoom_price());
+        ps.setString(5, room.getRoom_state());
+        ps.setBoolean(6, room.isActive());
     }
 
     @Override
@@ -116,7 +121,9 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
     @Override
     protected void setGeneratedKey(Room room, ResultSet keys) throws SQLException {
-        room.setId(keys.getInt(1));
+        if (room.getId() <= 0) {
+            room.setId(keys.getInt(1));
+        }
     }
 
     // ===================================
@@ -166,6 +173,19 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
         } catch (SQLException e) {
             throw new RuntimeException("Error en updateIsActive", e);
+        }
+    }
+
+    private int nextId() {
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(NEXT_ID);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            throw new RuntimeException("No fue posible calcular el id de room");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obteniendo next id de room", e);
         }
     }
 }
