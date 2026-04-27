@@ -41,6 +41,8 @@ public class AppConfig {
 
     // App getters
     public String getAppName()    { return appProps.getProperty("app.name"); }
+    public int getHoraCheckIn()   { return parseInt("horaCheckIn", 15); }
+    public int getHoraCheckOut()  { return parseInt("horaCheckOut", 12); }
     //public String getViewType()   { return appProps.getProperty("view.type", "console"); }
     public double getIva() {
         try {
@@ -49,5 +51,12 @@ public class AppConfig {
             return 0.19;
         }
     }
-}
 
+    private int parseInt(String key, int fallback) {
+        try {
+            return Integer.parseInt(appProps.getProperty(key, String.valueOf(fallback)));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+}

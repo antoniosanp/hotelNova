@@ -1,0 +1,5 @@
+[INFO] GET /rooms
+[INFO] GET /guests
+[INFO] POST /auth/login
+[INFO] GET /exports/rooms
+[INFO] GET /exports/reservations-active
