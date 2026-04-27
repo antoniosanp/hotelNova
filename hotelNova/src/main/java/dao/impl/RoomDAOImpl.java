@@ -4,6 +4,8 @@ import dao.RoomDAO;
 import model.Room;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDAO {
@@ -12,11 +14,11 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
     // SQL CRUD GENERAL
     // =========================
     private static final String INSERT =
-            "INSERT INTO room (id_room, room_number, room_capacity, room_price, room_state, isActive) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+            "INSERT INTO room (id_room, room_type, room_number, room_capacity, room_price, room_state, isActive) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE =
-            "UPDATE room SET room_number=?, room_capacity=?, room_price=?, room_state=?, isActive=? " +
+            "UPDATE room SET room_type=?, room_number=?, room_capacity=?, room_price=?, room_state=?, isActive=? " +
                     "WHERE id_room=?";
 
     private static final String DELETE =
@@ -39,6 +41,10 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
     private static final String UPDATE_ACTIVE =
             "UPDATE room SET isActive=? WHERE id_room=?";
+    private static final String FIND_BY_TYPE =
+            "SELECT * FROM room WHERE room_type=? ORDER BY room_number";
+    private static final String FIND_BY_STATE =
+            "SELECT * FROM room WHERE room_state=? ORDER BY room_number";
     private static final String NEXT_ID =
             "SELECT COALESCE(MAX(id_room), 0) + 1 FROM room";
 
@@ -51,6 +57,7 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
         Room room = new Room();
 
         room.setId(rs.getInt("id_room"));
+        room.setRoom_type(rs.getString("room_type"));
         room.setRoom_number(rs.getInt("room_number"));
         room.setRoom_capacity(rs.getInt("room_capacity"));
         room.setRoom_price(rs.getDouble("room_price"));
@@ -92,21 +99,23 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
             room.setId(nextId());
         }
         ps.setInt(1, room.getId());
+        ps.setString(2, room.getRoom_type());
+        ps.setInt(3, room.getRoom_number());
+        ps.setInt(4, room.getRoom_capacity());
+        ps.setDouble(5, room.getRoom_price());
+        ps.setString(6, room.getRoom_state());
+        ps.setBoolean(7, room.isActive());
+    }
+
+    @Override
+    protected void setUpdateParams(PreparedStatement ps, Room room) throws SQLException {
+        ps.setString(1, room.getRoom_type());
         ps.setInt(2, room.getRoom_number());
         ps.setInt(3, room.getRoom_capacity());
         ps.setDouble(4, room.getRoom_price());
         ps.setString(5, room.getRoom_state());
         ps.setBoolean(6, room.isActive());
-    }
-
-    @Override
-    protected void setUpdateParams(PreparedStatement ps, Room room) throws SQLException {
-        ps.setInt(1, room.getRoom_number());
-        ps.setInt(2, room.getRoom_capacity());
-        ps.setDouble(3, room.getRoom_price());
-        ps.setString(4, room.getRoom_state());
-        ps.setBoolean(5, room.isActive());
-        ps.setInt(6, room.getId());
+        ps.setInt(7, room.getId());
     }
 
     @Override
@@ -143,6 +152,40 @@ public class RoomDAOImpl extends GenericDAOImpl<Room, Integer> implements RoomDA
 
         } catch (SQLException e) {
             throw new RuntimeException("Error en findByNumber", e);
+        }
+    }
+
+    @Override
+    public List<Room> findByType(String roomType) {
+        List<Room> rooms = new ArrayList<>();
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(FIND_BY_TYPE)) {
+            ps.setString(1, roomType);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rooms.add(mapRow(rs));
+                }
+            }
+            return rooms;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en findByType", e);
+        }
+    }
+
+    @Override
+    public List<Room> findByState(String roomState) {
+        List<Room> rooms = new ArrayList<>();
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(FIND_BY_STATE)) {
+            ps.setString(1, roomState);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rooms.add(mapRow(rs));
+                }
+            }
+            return rooms;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en findByState", e);
         }
     }
 

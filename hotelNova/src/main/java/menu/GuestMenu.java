@@ -17,7 +17,7 @@ public class GuestMenu {
         while (true) {
             String option = JOptionPane.showInputDialog(
                     null,
-                    "Guest Menu\n1) Crear huésped\n2) Listar huéspedes\n3) Actualizar huésped\n4) Eliminar huésped\n0) Volver",
+                    "Guest Menu\n1) Crear huésped\n2) Listar huéspedes\n3) Actualizar huésped\n4) Eliminar huésped\n5) Activar/Desactivar huésped\n6) Buscar por email\n7) Listar huéspedes activos\n0) Volver",
                     "Guest Menu",
                     JOptionPane.QUESTION_MESSAGE
             );
@@ -32,6 +32,9 @@ public class GuestMenu {
                     case "2" -> JOptionPane.showMessageDialog(null, guestController.listGuestsAsTable());
                     case "3" -> updateGuest();
                     case "4" -> deleteGuest();
+                    case "5" -> toggleGuest();
+                    case "6" -> findByEmail();
+                    case "7" -> JOptionPane.showMessageDialog(null, guestController.listActiveGuestsAsTable());
                     default -> JOptionPane.showMessageDialog(null, "Opción inválida");
                 }
             } catch (Exception ex) {
@@ -49,9 +52,10 @@ public class GuestMenu {
 
     private void updateGuest() {
         int id = askInt("Id del huésped a actualizar:");
+        String active = JOptionPane.showInputDialog("¿Activo? (true/false):");
         String name = JOptionPane.showInputDialog("Nuevo nombre:");
         String email = JOptionPane.showInputDialog("Nuevo email:");
-        boolean updated = guestController.updateGuest(new Guest(id, name, email));
+        boolean updated = guestController.updateGuest(new Guest(id, Boolean.parseBoolean(active), name, email));
         JOptionPane.showMessageDialog(null, updated ? "Huésped actualizado" : "No se pudo actualizar");
     }
 
@@ -59,6 +63,19 @@ public class GuestMenu {
         int id = askInt("Id del huésped a eliminar:");
         boolean deleted = guestController.deleteGuest(id);
         JOptionPane.showMessageDialog(null, deleted ? "Huésped eliminado" : "No se pudo eliminar");
+    }
+
+    private void toggleGuest() {
+        int id = askInt("Id del huésped:");
+        String activeValue = JOptionPane.showInputDialog("Nuevo estado activo (true/false):");
+        boolean active = Boolean.parseBoolean(activeValue);
+        boolean updated = guestController.toggleGuestActive(id, active);
+        JOptionPane.showMessageDialog(null, updated ? "Estado actualizado" : "No se pudo actualizar");
+    }
+
+    private void findByEmail() {
+        String email = JOptionPane.showInputDialog("Email del huésped:");
+        JOptionPane.showMessageDialog(null, guestController.findGuestByEmailAsTable(email));
     }
 
     private int askInt(String message) {

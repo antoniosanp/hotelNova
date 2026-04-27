@@ -18,7 +18,7 @@ public class ReservationMenu {
         while (true) {
             String option = JOptionPane.showInputDialog(
                     null,
-                    "Reservation Menu\n1) Crear reserva (check-in)\n2) Listar reservas\n3) Actualizar reserva\n4) Eliminar reserva\n5) Check-out\n0) Volver",
+                    "Reservation Menu\n1) Crear reserva (check-in)\n2) Listar reservas\n3) Actualizar reserva\n4) Eliminar reserva\n5) Check-out\n6) Listar por habitación\n0) Volver",
                     "Reservation Menu",
                     JOptionPane.QUESTION_MESSAGE
             );
@@ -34,6 +34,7 @@ public class ReservationMenu {
                     case "3" -> updateReservation();
                     case "4" -> deleteReservation();
                     case "5" -> checkOut();
+                    case "6" -> listByRoom();
                     default -> JOptionPane.showMessageDialog(null, "Opción inválida");
                 }
             } catch (Exception ex) {
@@ -79,6 +80,11 @@ public class ReservationMenu {
         int id = askInt("Id de reserva para check-out:");
         double total = reservationController.checkOut(id);
         JOptionPane.showMessageDialog(null, "Check-out completado. Total a pagar: " + total);
+    }
+
+    private void listByRoom() {
+        int roomId = askInt("Id de habitación:");
+        JOptionPane.showMessageDialog(null, reservationController.listReservationsByRoomAsTable(roomId));
     }
 
     private int askInt(String message) {

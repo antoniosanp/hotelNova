@@ -10,7 +10,6 @@ import utils.AppLogger;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 public class RoomService implements IRoomService {
 
@@ -27,11 +26,14 @@ public class RoomService implements IRoomService {
     }
 
     @Override
-    public Room createRoom(int roomNumber, int capacity, double price, String state) {
+    public Room createRoom(int roomNumber, String roomType, int capacity, double price, String state) {
         AppLogger.http("POST", "/rooms");
 
         if (roomNumber <= 0) {
             throw new BusinessException("Número de habitación inválido");
+        }
+        if (roomType == null || roomType.isBlank()) {
+            throw new BusinessException("El tipo de habitación es obligatorio");
         }
         if (capacity <= 0) {
             throw new BusinessException("Capacidad inválida");
@@ -44,7 +46,7 @@ public class RoomService implements IRoomService {
         }
 
         String normalizedState = normalizeState(state);
-        Room room = new Room(roomNumber, capacity, price, normalizedState);
+        Room room = new Room(roomNumber, roomType.trim(), capacity, price, normalizedState);
         room.setActive(true);
         return roomDAO.save(room);
     }
@@ -61,6 +63,9 @@ public class RoomService implements IRoomService {
             }
         });
 
+        if (room.getRoom_type() == null || room.getRoom_type().isBlank()) {
+            throw new BusinessException("El tipo de habitación es obligatorio");
+        }
         room.setRoom_state(normalizeState(room.getRoom_state()));
         room.setCreatedAt(existing.getCreatedAt());
         return roomDAO.update(room);
@@ -94,9 +99,16 @@ public class RoomService implements IRoomService {
     public List<Room> listRoomsByState(String state) {
         AppLogger.http("GET", "/rooms?state=" + state);
         String normalizedState = normalizeState(state);
-        return roomDAO.findAll().stream()
-                .filter(room -> normalizedState.equalsIgnoreCase(room.getRoom_state()))
-                .collect(Collectors.toList());
+        return roomDAO.findByState(normalizedState);
+    }
+
+    @Override
+    public List<Room> listRoomsByType(String type) {
+        AppLogger.http("GET", "/rooms?type=" + type);
+        if (type == null || type.isBlank()) {
+            throw new BusinessException("El tipo de habitación es obligatorio para filtrar");
+        }
+        return roomDAO.findByType(type.trim());
     }
 
     private String normalizeState(String state) {

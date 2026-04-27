@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public class Room {
 
     private int id;
+    private String room_type;
     private int room_number;
     private int room_capacity;
     private double room_price;
@@ -16,16 +17,18 @@ public class Room {
     //-------------------------------------------------------------------------------------------
     //---------Constructors----------------------------------------------------------------------
 
-    public Room(int id, int room_number, int room_capacity, double room_price, String room_state) {
+    public Room(int id, String room_type, int room_number, int room_capacity, double room_price, String room_state) {
         this.id = id;
+        this.room_type = room_type;
         this.room_number = room_number;
         this.room_capacity = room_capacity;
         this.room_price = room_price;
         this.room_state = room_state;
     }
 
-    public Room(int room_number, int room_capacity, double room_price, String room_state) {
+    public Room(int room_number, String room_type, int room_capacity, double room_price, String room_state) {
         this.room_number = room_number;
+        this.room_type = room_type;
         this.room_capacity = room_capacity;
         this.room_price = room_price;
         this.room_state = room_state;
@@ -44,6 +47,10 @@ public class Room {
 
     public int getRoom_number() {
         return room_number;
+    }
+
+    public String getRoom_type() {
+        return room_type;
     }
 
     public int getRoom_capacity() {
@@ -72,6 +79,10 @@ public class Room {
 
     public void setRoom_number(int room_number) {
         this.room_number = room_number;
+    }
+
+    public void setRoom_type(String room_type) {
+        this.room_type = room_type;
     }
 
     public void setRoom_capacity(int room_capacity) {

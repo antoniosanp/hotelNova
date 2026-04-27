@@ -21,8 +21,8 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    public Room createRoom(int roomNumber, int capacity, double price, String state) {
-        return roomService.createRoom(roomNumber, capacity, price, state);
+    public Room createRoom(int roomNumber, String roomType, int capacity, double price, String state) {
+        return roomService.createRoom(roomNumber, roomType, capacity, price, state);
     }
 
     public boolean updateRoom(Room room) {
@@ -42,7 +42,7 @@ public class RoomController {
                 .map(this::toRow)
                 .collect(Collectors.toList());
         return TableFormatterUtil.format(
-                new String[]{"ID", "NUMERO", "CAP", "PRECIO", "ESTADO", "ACTIVO"},
+                new String[]{"ID", "TIPO", "NUMERO", "CAP", "PRECIO", "ESTADO", "ACTIVO"},
                 rows
         );
     }
@@ -52,7 +52,17 @@ public class RoomController {
                 .map(this::toRow)
                 .collect(Collectors.toList());
         return TableFormatterUtil.format(
-                new String[]{"ID", "NUMERO", "CAP", "PRECIO", "ESTADO", "ACTIVO"},
+                new String[]{"ID", "TIPO", "NUMERO", "CAP", "PRECIO", "ESTADO", "ACTIVO"},
+                rows
+        );
+    }
+
+    public String listRoomsByTypeAsTable(String type) {
+        List<String[]> rows = roomService.listRoomsByType(type).stream()
+                .map(this::toRow)
+                .collect(Collectors.toList());
+        return TableFormatterUtil.format(
+                new String[]{"ID", "TIPO", "NUMERO", "CAP", "PRECIO", "ESTADO", "ACTIVO"},
                 rows
         );
     }
@@ -64,6 +74,7 @@ public class RoomController {
     private String[] toRow(Room room) {
         return new String[]{
                 String.valueOf(room.getId()),
+                room.getRoom_type(),
                 String.valueOf(room.getRoom_number()),
                 String.valueOf(room.getRoom_capacity()),
                 String.valueOf(room.getRoom_price()),

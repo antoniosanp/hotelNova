@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS room (
                                     id_room SERIAL PRIMARY KEY,
-                                    room_number INTEGER NOT NULL UNIQUE,
-                                    room_capacity INTEGER NOT NULL,
-                                    room_price DECIMAL(10,2) NOT NULL,
+                                    room_type VARCHAR(255) not null,
+    room_number INTEGER NOT NULL UNIQUE,
+    room_capacity INTEGER NOT NULL,
+    room_price DECIMAL(10,2) NOT NULL,
     room_state VARCHAR(50) NOT NULL,
     isActive BOOLEAN NOT NULL DEFAULT TRUE,
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS room (
 
 CREATE TABLE IF NOT EXISTS guest (
                                      id_guest SERIAL PRIMARY KEY,
+                                     isActive BOOLEAN not null default TRUE,
                                      name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE
     );

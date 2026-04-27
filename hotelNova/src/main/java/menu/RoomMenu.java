@@ -17,7 +17,7 @@ public class RoomMenu {
         while (true) {
             String option = JOptionPane.showInputDialog(
                     null,
-                    "Room Menu\n1) Crear habitación\n2) Listar habitaciones\n3) Actualizar habitación\n4) Eliminar habitación\n5) Activar/Desactivar habitación\n0) Volver",
+                    "Room Menu\n1) Crear habitación\n2) Listar habitaciones\n3) Actualizar habitación\n4) Eliminar habitación\n5) Activar/Desactivar habitación\n6) Filtrar por tipo\n7) Filtrar por estado\n0) Volver",
                     "Room Menu",
                     JOptionPane.QUESTION_MESSAGE
             );
@@ -33,6 +33,8 @@ public class RoomMenu {
                     case "3" -> updateRoom();
                     case "4" -> deleteRoom();
                     case "5" -> toggleRoom();
+                    case "6" -> filterByType();
+                    case "7" -> filterByState();
                     default -> JOptionPane.showMessageDialog(null, "Opción inválida");
                 }
             } catch (Exception ex) {
@@ -43,23 +45,25 @@ public class RoomMenu {
 
     private void createRoom() {
         int number = askInt("Número de habitación:");
+        String type = JOptionPane.showInputDialog("Tipo de habitación (SINGLE/DOUBLE/SUITE):");
         int capacity = askInt("Capacidad:");
         double price = askDouble("Precio por noche:");
         String state = JOptionPane.showInputDialog("Estado (DISPONIBLE/OCUPADA):");
-        Room room = roomController.createRoom(number, capacity, price, state);
+        Room room = roomController.createRoom(number, type, capacity, price, state);
         JOptionPane.showMessageDialog(null, "Habitación creada con id " + room.getId());
     }
 
     private void updateRoom() {
         int id = askInt("Id de habitación:");
         int number = askInt("Nuevo número de habitación:");
+        String type = JOptionPane.showInputDialog("Nuevo tipo de habitación:");
         int capacity = askInt("Nueva capacidad:");
         double price = askDouble("Nuevo precio:");
         String state = JOptionPane.showInputDialog("Nuevo estado (DISPONIBLE/OCUPADA):");
         String activeValue = JOptionPane.showInputDialog("¿Activa? (true/false):");
         boolean active = Boolean.parseBoolean(activeValue);
 
-        Room room = new Room(id, number, capacity, price, state);
+        Room room = new Room(id, type, number, capacity, price, state);
         room.setActive(active);
         boolean updated = roomController.updateRoom(room);
         JOptionPane.showMessageDialog(null, updated ? "Habitación actualizada" : "No se pudo actualizar");
@@ -77,6 +81,16 @@ public class RoomMenu {
         boolean active = Boolean.parseBoolean(value);
         boolean updated = roomController.toggleRoomActive(id, active);
         JOptionPane.showMessageDialog(null, updated ? "Estado actualizado" : "No se pudo actualizar");
+    }
+
+    private void filterByType() {
+        String type = JOptionPane.showInputDialog("Tipo a filtrar:");
+        JOptionPane.showMessageDialog(null, roomController.listRoomsByTypeAsTable(type));
+    }
+
+    private void filterByState() {
+        String state = JOptionPane.showInputDialog("Estado a filtrar (DISPONIBLE/OCUPADA):");
+        JOptionPane.showMessageDialog(null, roomController.listRoomsByStateAsTable(state));
     }
 
     private int askInt(String message) {

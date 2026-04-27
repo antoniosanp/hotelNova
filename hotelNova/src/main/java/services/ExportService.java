@@ -33,7 +33,7 @@ public class ExportService implements IExportService {
         List<String[]> rows = roomDAO.findAll().stream()
                 .map(this::roomToRow)
                 .collect(Collectors.toList());
-        CsvUtil.writeCsv(fileName, new String[]{"id", "numero", "capacidad", "precioPorNoche", "estado", "activo", "createdAt"}, rows);
+        CsvUtil.writeCsv(fileName, new String[]{"id", "tipo", "numero", "capacidad", "precioPorNoche", "estado", "activo", "createdAt"}, rows);
     }
 
     @Override
@@ -49,6 +49,7 @@ public class ExportService implements IExportService {
     private String[] roomToRow(Room room) {
         return new String[]{
                 String.valueOf(room.getId()),
+                room.getRoom_type(),
                 String.valueOf(room.getRoom_number()),
                 String.valueOf(room.getRoom_capacity()),
                 String.valueOf(room.getRoom_price()),

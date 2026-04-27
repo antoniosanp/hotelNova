@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements GuestDAO {
@@ -14,11 +16,11 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
     // SQL CRUD GENERAL
     // =========================
     private static final String INSERT =
-            "INSERT INTO guest (id_guest, name, email) " +
-                    "VALUES (?, ?, ?)";
+            "INSERT INTO guest (id_guest, isActive, name, email) " +
+                    "VALUES (?, ?, ?, ?)";
 
     private static final String UPDATE =
-            "UPDATE guest SET name=?, email=? " +
+            "UPDATE guest SET isActive=?, name=?, email=? " +
                     "WHERE id_guest=?";
 
     private static final String DELETE =
@@ -35,6 +37,10 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
     // =========================
     private static final String FIND_BY_EMAIL =
             "SELECT * FROM guest WHERE email=?";
+    private static final String FIND_BY_IS_ACTIVE =
+            "SELECT * FROM guest WHERE isActive=? ORDER BY id_guest";
+    private static final String UPDATE_IS_ACTIVE =
+            "UPDATE guest SET isActive=? WHERE id_guest=?";
     private static final String NEXT_ID =
             "SELECT COALESCE(MAX(id_guest), 0) + 1 FROM guest";
 
@@ -48,6 +54,7 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
         Guest guest = new Guest();
 
         guest.setId(rs.getInt("id_guest"));
+        guest.setActive(rs.getBoolean("isActive"));
         guest.setName(rs.getString("name"));
         guest.setEmail(rs.getString("email"));
 
@@ -85,16 +92,18 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
             guest.setId(nextId());
         }
         ps.setInt(1, guest.getId());
-        ps.setString(2, guest.getName());
-        ps.setString(3, guest.getEmail());
+        ps.setBoolean(2, guest.isActive());
+        ps.setString(3, guest.getName());
+        ps.setString(4, guest.getEmail());
 
     }
 
     @Override
     protected void setUpdateParams(PreparedStatement ps, Guest guest) throws SQLException {
-        ps.setString(1, guest.getName());
-        ps.setString(2, guest.getEmail());
-        ps.setInt(3, guest.getId());
+        ps.setBoolean(1, guest.isActive());
+        ps.setString(2, guest.getName());
+        ps.setString(3, guest.getEmail());
+        ps.setInt(4, guest.getId());
     }
 
     @Override
@@ -133,6 +142,35 @@ public class GuestDAOImpl extends GenericDAOImpl<Guest,Integer> implements Guest
         }
 
 
+    }
+
+    @Override
+    public List<Guest> findByIsActive(boolean active) {
+        List<Guest> guests = new ArrayList<>();
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(FIND_BY_IS_ACTIVE)) {
+            ps.setBoolean(1, active);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    guests.add(mapRow(rs));
+                }
+            }
+            return guests;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en findByIsActive", e);
+        }
+    }
+
+    @Override
+    public boolean updateIsActive(int id_guest, boolean active) {
+        try (Connection conn = cm.getConnection();
+             PreparedStatement ps = conn.prepareStatement(UPDATE_IS_ACTIVE)) {
+            ps.setBoolean(1, active);
+            ps.setInt(2, id_guest);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en updateIsActive", e);
+        }
     }
 
     private int nextId() {

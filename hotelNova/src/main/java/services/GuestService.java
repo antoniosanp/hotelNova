@@ -31,7 +31,7 @@ public class GuestService implements IGuestService {
             throw new BusinessException("Ya existe un huésped con ese email");
         }
 
-        return guestDAO.save(new Guest(name, email));
+        return guestDAO.save(new Guest(true, name, email));
     }
 
     @Override
@@ -39,14 +39,17 @@ public class GuestService implements IGuestService {
         AppLogger.http("PATCH", "/guests/" + guest.getId());
         validate(guest.getName(), guest.getEmail());
 
-        guestDAO.findById(guest.getId())
+        Guest existing = guestDAO.findById(guest.getId())
                 .orElseThrow(() -> new NotFoundException("No existe el huésped a actualizar"));
 
-        guestDAO.findByEmail(guest.getEmail()).ifPresent(existing -> {
-            if (existing.getId() != guest.getId()) {
+        guestDAO.findByEmail(guest.getEmail()).ifPresent(found -> {
+            if (found.getId() != guest.getId()) {
                 throw new BusinessException("El email ya está en uso por otro huésped");
             }
         });
+        if (!guest.isActive() && existing.isActive()) {
+            guest.setActive(false);
+        }
         return guestDAO.update(guest);
     }
 
@@ -60,9 +63,34 @@ public class GuestService implements IGuestService {
     }
 
     @Override
+    public boolean toggleActive(int id, boolean active) {
+        AppLogger.http("PATCH", "/guests/" + id + "/active");
+        if (guestDAO.findById(id).isEmpty()) {
+            throw new NotFoundException("No existe el huésped");
+        }
+        return guestDAO.updateIsActive(id, active);
+    }
+
+    @Override
+    public Guest findByEmail(String email) {
+        AppLogger.http("GET", "/guests/email/" + email);
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("El email es obligatorio");
+        }
+        return guestDAO.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("No existe huésped con ese email"));
+    }
+
+    @Override
     public List<Guest> listGuests() {
         AppLogger.http("GET", "/guests");
         return guestDAO.findAll();
+    }
+
+    @Override
+    public List<Guest> listActiveGuests() {
+        AppLogger.http("GET", "/guests?active=true");
+        return guestDAO.findByIsActive(true);
     }
 
     private void validate(String name, String email) {

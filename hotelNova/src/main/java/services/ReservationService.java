@@ -10,6 +10,7 @@ import dao.impl.RoomDAOImpl;
 import db.ConnectionManager;
 import exceptions.BusinessException;
 import exceptions.NotFoundException;
+import model.Guest;
 import model.Reservation;
 import model.Room;
 import services.interfaces.IReservationService;
@@ -66,13 +67,16 @@ public class ReservationService implements IReservationService {
         validateDates(dayIn, dayOut);
 
         Room room = roomDAO.findById(roomId).orElseThrow(() -> new NotFoundException("Habitación no encontrada"));
-        guestDAO.findById(guestId).orElseThrow(() -> new NotFoundException("Huésped no encontrado"));
+        Guest guest = guestDAO.findById(guestId).orElseThrow(() -> new NotFoundException("Huésped no encontrado"));
 
         if (!room.isActive()) {
             throw new BusinessException("La habitación está inactiva");
         }
         if (!STATE_DISPONIBLE.equalsIgnoreCase(room.getRoom_state())) {
             throw new BusinessException("La habitación no está disponible");
+        }
+        if (!guest.isActive()) {
+            throw new BusinessException("El huésped está inactivo");
         }
         if (reservationDAO.hasOverlappingReservation(roomId, dayIn, dayOut)) {
             throw new BusinessException("No se permite solapamiento de reservas para la misma habitación");
@@ -139,7 +143,10 @@ public class ReservationService implements IReservationService {
         Reservation existing = reservationDAO.findById(reservation.getId())
                 .orElseThrow(() -> new NotFoundException("Reserva no encontrada"));
         roomDAO.findById(reservation.getId_room()).orElseThrow(() -> new NotFoundException("Habitación no encontrada"));
-        guestDAO.findById(reservation.getId_guest()).orElseThrow(() -> new NotFoundException("Huésped no encontrado"));
+        Guest guest = guestDAO.findById(reservation.getId_guest()).orElseThrow(() -> new NotFoundException("Huésped no encontrado"));
+        if (!guest.isActive()) {
+            throw new BusinessException("No se puede asignar una reserva a un huésped inactivo");
+        }
 
         boolean overlap = reservationDAO.findByRoom(reservation.getId_room()).stream()
                 .filter(r -> r.getId() != reservation.getId())
